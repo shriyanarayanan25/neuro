@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NEURAL ESCAPE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green: #00ff88;
+      --green-dim: #00ff8844;
+      --green-glow: 0 0 30px #00ff8866;
+      --red: #ff3333;
+      --orange: #ffaa00;
+      --bg: #000;
+      --bg2: #0a0a0a;
+      --bg3: #050505;
+      --border: #1a1a1a;
+      --text-dim: #555;
+      --text-mid: #888;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--green);
+      font-family: 'Share Tech Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,255,136,0.015) 2px, rgba(0,255,136,0.015) 4px
+      );
+      pointer-events: none; z-index: 998;
+    }
+
+    body::after {
+      content: '';
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-image:
+        linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+      animation: gridPulse 8s ease-in-out infinite;
+    }
+
+    @keyframes gridPulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    #intro-screen {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .intro-logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      font-weight: 900;
+      letter-spacing: 12px;
+      color: var(--green);
+      text-shadow: 0 0 60px #00ff88, 0 0 120px #00ff8844;
+      animation: flicker 6s infinite;
+      margin-bottom: 8px;
+    }
+
+    @keyframes flicker {
+      0%,95%,100% { opacity: 1; }
+      96% { opacity: 0.7; }
+      97% { opacity: 1; }
+      98% { opacity: 0.4; }
+      99% { opacity: 1; }
+    }
+
+    .intro-sub {
+      font-size: 0.75rem;
+      letter-spacing: 6px;
+      color: var(--text-dim);
+      margin-bottom: 50px;
+    }
+
+    .intro-desc {
+      max-width: 520px;
+      color: var(--text-mid);
+      line-height: 2;
+      font-size: 0.9rem;
+      margin-bottom: 40px;
+      border: 1px solid #111;
+      padding: 24px;
+      border-radius: 4px;
+      text-align: left;
+    }
+
+    .intro-desc span { color: var(--green); }
+
+    #story-loading {
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      display: none;
+      margin-top: 20px;
+    }
+
+    .dot-anim::after {
+      content: '';
+      animation: dots 1.2s steps(4) infinite;
+    }
+    @keyframes dots {
+      0%   { content: '.'; }
+      33%  { content: '..'; }
+      66%  { content: '...'; }
+      100% { content: ''; }
+    }
+
+    #end-screen {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.97);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      text-align: center;
+      padding: 40px;
+    }
+
+    #end-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      font-weight: 900;
+      letter-spacing: 6px;
+      margin-bottom: 24px;
+    }
+
+    #end-story {
+      max-width: 580px;
+      line-height: 1.9;
+      color: #aaa;
+      margin: 0 auto 20px;
+      font-size: 0.95rem;
+      border-left: 2px solid var(--green);
+      padding-left: 20px;
+      text-align: left;
+    }
+
+    #end-stats {
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      letter-spacing: 3px;
+      margin-bottom: 36px;
+    }
+
+    header {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 28px 20px 20px;
+      border-bottom: 1px solid var(--green-dim);
+    }
+
+    header h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.5rem, 5vw, 2.8rem);
+      font-weight: 900;
+      letter-spacing: 10px;
+      text-shadow: var(--green-glow);
+    }
+
+    #header-status {
+      font-size: 0.7rem;
+      letter-spacing: 4px;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+
+    .main-grid {
+      position: relative; z-index: 10;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .panel {
+      background: var(--bg2);
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--green), transparent);
+      opacity: 0.4;
+    }
+
+    .panel-title {
+      font-size: 0.65rem;
+      letter-spacing: 4px;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title::before {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--green);
+    }
+
+    #timer-display {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      font-weight: 900;
+      text-align: center;
+      color: var(--green);
+      text-shadow: 0 0 50px #00ff88;
+      letter-spacing: 6px;
+      transition: color 0.5s, text-shadow 0.5s;
+    }
+
+    #timer-display.warning {
+      color: var(--orange);
+      text-shadow: 0 0 50px var(--orange);
+    }
+
+    #timer-display.danger {
+      color: var(--red);
+      text-shadow: 0 0 50px var(--red);
+      animation: timerPulse 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes timerPulse {
+      from { transform: scale(1); }
+      to   { transform: scale(1.02); }
+    }
+
+    #hints-display {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+    }
+
+    .puzzle-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .puzzle-card {
+      background: #0a0a0a;
+      border: 1px solid #1f1f1f;
+      border-radius: 6px;
+      padding: 14px;
+      transition: all 0.5s cubic-bezier(0.4,0,0.2,1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .puzzle-card.done {
+      border-color: var(--green);
+      background: #001a0e;
+    }
+
+    .puzzle-card.done::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, #00ff8808 0%, transparent 70%);
+    }
+
+    .puzzle-card.active {
+      border-color: var(--orange);
+      animation: activePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes activePulse {
+      0%,100% { box-shadow: 0 0 0 0 transparent; }
+      50% { box-shadow: 0 0 15px 2px rgba(255,170,0,0.2); }
+    }
+
+    .p-icon { font-size: 1.6rem; margin-bottom: 6px; }
+    .p-name { font-size: 0.65rem; letter-spacing: 2px; color: var(--text-mid); }
+    .p-status { font-size: 0.8rem; margin-top: 4px; color: #333; }
+    .puzzle-card.done .p-status { color: var(--green); }
+    .puzzle-card.active .p-status { color: var(--orange); }
+
+    .full-width { grid-column: 1 / -1; }
+
+    #story-box {
+      background: var(--bg3);
+      border: 1px solid #111;
+      border-radius: 4px;
+      padding: 20px;
+      min-height: 160px;
+      line-height: 1.9;
+      font-size: 0.9rem;
+      color: #999;
+      white-space: pre-wrap;
+    }
+
+    #story-box .highlight {
+      color: #ffff33;
+      background: rgba(255,255,51,0.1);
+      padding: 1px 4px;
+      border-radius: 2px;
+      font-weight: bold;
+      text-shadow: 0 0 10px #ffff33;
+    }
+
+    .sensor-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 0;
+      border-bottom: 1px solid #0f0f0f;
+      font-size: 0.85rem;
+    }
+    .sensor-row:last-child { border-bottom: none; }
+    .s-label { color: var(--text-dim); font-size: 0.75rem; letter-spacing: 1px; }
+    .s-value { color: var(--green); font-size: 0.9rem; }
+
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 0;
+      border-bottom: 1px solid #0f0f0f;
+      font-size: 0.82rem;
+    }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-rank { color: var(--orange); width: 24px; font-size: 0.75rem; }
+    .lb-date { color: #666; flex: 1; font-size: 0.75rem; }
+    .lb-time { color: var(--green); }
+    .lb-hints { color: var(--text-dim); font-size: 0.7rem; }
+
+    .btn {
+      background: transparent;
+      border: 1px solid var(--green);
+      color: var(--green);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.85rem;
+      padding: 13px 30px;
+      cursor: pointer;
+      letter-spacing: 3px;
+      border-radius: 3px;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0,255,136,0.1), transparent);
+      transition: left 0.4s;
+    }
+
+    .btn:hover::before { left: 100%; }
+    .btn:hover {
+      background: rgba(0,255,136,0.08);
+      box-shadow: 0 0 25px rgba(0,255,136,0.3);
+    }
+
+    #status-bar {
+      position: relative; z-index: 10;
+      text-align: center;
+      padding: 10px;
+      border-top: 1px solid #0f0f0f;
+      font-size: 0.65rem;
+      color: #222;
+      letter-spacing: 3px;
+    }
+
+    .corner-deco {
+      position: absolute;
+      width: 12px; height: 12px;
+      border-color: var(--green);
+      border-style: solid;
+      opacity: 0.4;
+    }
+    .corner-tl { top: 8px; left: 8px; border-width: 1px 0 0 1px; }
+    .corner-tr { top: 8px; right: 8px; border-width: 1px 1px 0 0; }
+    .corner-bl { bottom: 8px; left: 8px; border-width: 0 0 1px 1px; }
+    .corner-br { bottom: 8px; right: 8px; border-width: 0 1px 1px 0; }
+
+    @media (max-width: 720px) {
+      .main-grid { grid-template-columns: 1fr; padding: 12px; }
+      .full-width { grid-column: 1; }
+      .puzzle-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="intro-screen">
+  <div class="intro-logo">NEURAL ESCAPE</div>
+  <div class="intro-sub">CLASSIFIED MISSION SYSTEM · v2.0</div>
+  <div class="intro-desc">
+    <span>INSTRUCTIONS:</span><br><br>
+    1. Click the button below to generate your AI mission briefing<br>
+    2. Press <span>[A]</span> on the hardware keypad to start the timer<br>
+    3. Read the briefing carefully — the vault code is hidden inside<br>
+    4. Solve all 4 physical puzzles before time runs out<br>
+    5. Use Blynk on your phone to request hints (+30s penalty each)
+  </div>
+  <button class="btn" onclick="generateStory()">⚡ GENERATE MISSION BRIEFING</button>
+  <div id="story-loading" class="dot-anim">CONTACTING COMMAND</div>
+</div>
+
+<div id="end-screen">
+  <div class="corner-deco corner-tl"></div>
+  <div class="corner-deco corner-tr"></div>
+  <div class="corner-deco corner-bl"></div>
+  <div class="corner-deco corner-br"></div>
+  <div id="end-title"></div>
+  <div id="end-story">Generating debrief...</div>
+  <div id="end-stats"></div>
+  <button class="btn" onclick="resetGame()">↺ &nbsp;NEW MISSION</button>
+</div>
+
+<header>
+  <h1>NEURAL ESCAPE</h1>
+  <div id="header-status">AWAITING MISSION START</div>
+</header>
+
+<div class="main-grid">
+
+  <div class="panel">
+    <div class="corner-deco corner-tl"></div>
+    <div class="corner-deco corner-tr"></div>
+    <div class="panel-title">MISSION TIMER</div>
+    <div id="timer-display">05:00</div>
+    <div id="hints-display">HINTS USED: 0</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">PUZZLE STATUS</div>
+    <div class="puzzle-grid">
+      <div class="puzzle-card" id="p1-card">
+        <div class="p-icon">🔦</div>
+        <div class="p-name">LASER GRID</div>
+        <div class="p-status" id="p1-status">LOCKED</div>
+      </div>
+      <div class="puzzle-card" id="p2-card">
+        <div class="p-icon">⚛️</div>
+        <div class="p-name">REACTOR</div>
+        <div class="p-status" id="p2-status">LOCKED</div>
+      </div>
+      <div class="puzzle-card" id="p3-card">
+        <div class="p-icon">🔐</div>
+        <div class="p-name">VAULT CODE</div>
+        <div class="p-status" id="p3-status">LOCKED</div>
+      </div>
+      <div class="puzzle-card" id="p4-card">
+        <div class="p-icon">⏰</div>
+        <div class="p-name">TIME SYNC</div>
+        <div class="p-status" id="p4-status">LOCKED</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel full-width">
+    <div class="panel-title">MISSION BRIEFING — READ CAREFULLY</div>
+    <div id="story-box">Awaiting mission generation...</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">LIVE SENSOR FEED</div>
+    <div class="sensor-row">
+      <span class="s-label">TIMER REMAINING</span>
+      <span class="s-value" id="s-timer">--</span>
+    </div>
+    <div class="sensor-row">
+      <span class="s-label">HINTS USED</span>
+      <span class="s-value" id="s-hints">0</span>
+    </div>
+    <div class="sensor-row">
+      <span class="s-label">PUZZLES DONE</span>
+      <span class="s-value" id="s-puzzles">0 / 4</span>
+    </div>
+    <div class="sensor-row">
+      <span class="s-label">GAME STATE</span>
+      <span class="s-value" id="s-state">IDLE</span>
+    </div>
+    <div class="sensor-row">
+      <span class="s-label">LAST UPDATE</span>
+      <span class="s-value" id="s-update">--</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">ESCAPE LEADERBOARD</div>
+    <div id="leaderboard">
+      <p style="color:#222; font-size:0.8rem; padding:10px 0;">No escapes recorded yet.</p>
+    </div>
+  </div>
+
+</div>
+
+<div id="status-bar">NEURAL ESCAPE SYSTEM v2.0 &nbsp;·&nbsp; ALL SYSTEMS NOMINAL &nbsp;·&nbsp; THINGSPEAK CONNECTED</div>
+
+<script>
+const GEMINI_API_KEY  = "AIzaSyDbRl8LyQCVCM2ZI0NXJz0wkz7FEFW71nQ";
+const TS_CHANNEL_ID   = "3359506";
+const TS_READ_API_KEY = "FPS2KQWPTNEDZ02Y";
+const SECRET_CODE     = "4821";
+
+let timerInterval = null;
+let fetchInterval = null;
+let secondsLeft   = 300;
+let gameRunning   = false;
+
+async function callGemini(prompt) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    }
+  );
+  const data = await res.json();
+  return data.candidates[0].content.parts[0].text;
+}
+
+async function generateStory() {
+  document.getElementById('story-loading').style.display = 'block';
+  document.querySelector('#intro-screen .btn').disabled = true;
+  document.querySelector('#intro-screen .btn').textContent = 'GENERATING...';
+
+  const themes = [
+    "cyberpunk heist in a megacorp tower",
+    "space station reactor emergency",
+    "underground Cold War bunker",
+    "abandoned biotech research lab",
+    "deep sea military facility",
+    "time travel experiment gone wrong",
+    "rogue AI server room takeover",
+    "nuclear submarine crisis"
+  ];
+  const theme = themes[Math.floor(Math.random() * themes.length)];
+
+  const prompt = `You are generating an escape room mission briefing. Theme: ${theme}.
+
+Write a dramatic 3-paragraph mission briefing (under 200 words) that:
+1. Sets a tense, urgent scene with vivid detail
+2. Explains the agent must: disable a laser grid, stabilize a reactor dial, enter a vault code, sync a clock
+3. Hides the number ${SECRET_CODE} somewhere naturally in the text as a serial number, frequency, coordinates, year, access level, or similar. Do NOT say "the code is ${SECRET_CODE}". Make it blend in.
+
+Use dramatic spy/sci-fi language. Make the agent feel like a hero under pressure.`;
+
+  try {
+    const story = await callGemini(prompt);
+    const highlighted = story.replace(
+      new RegExp(SECRET_CODE, 'g'),
+      `<span class="highlight">${SECRET_CODE}</span>`
+    );
+    document.getElementById('story-box').innerHTML = highlighted;
+    document.getElementById('intro-screen').style.display = 'none';
+    document.getElementById('header-status').textContent = 'MISSION BRIEFING LOADED — PRESS [A] TO START';
+    startPolling();
+  } catch (err) {
+    console.error('Gemini error:', err);
+    document.getElementById('story-box').innerHTML =
+      `MISSION BRIEFING — CLASSIFIED\n\nAgent, facility NEXUS-7 has been compromised. You have 5 minutes before the self-destruct sequence initiates.\n\nYour objectives: Disable the laser grid blocking corridor B. Stabilize the reactor cooling dial — hold it steady for 5 seconds. Access terminal ALPHA using clearance code <span class="highlight">${SECRET_CODE}</span>. Synchronize the escape pod launch clock.\n\nFail, and the facility and everything in it — including you — will be erased. Command out.`;
+    document.getElementById('intro-screen').style.display = 'none';
+    document.getElementById('header-status').textContent = 'MISSION BRIEFING LOADED — PRESS [A] TO START';
+    startPolling();
+  }
+}
+
+function startPolling() {
+  fetchThingSpeak();
+  fetchInterval = setInterval(fetchThingSpeak, 4000);
+}
+
+async function fetchThingSpeak() {
+  try {
+    const url = `https://api.thingspeak.com/channels/${TS_CHANNEL_ID}/feeds/last.json?api_key=${TS_READ_API_KEY}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    const p1    = parseInt(data.field1) || 0;
+    const p2    = parseInt(data.field2) || 0;
+    const p3    = parseInt(data.field3) || 0;
+    const p4    = parseInt(data.field4) || 0;
+    const timer = parseInt(data.field5) || 300;
+    const hints = parseInt(data.field6) || 0;
+    const state = parseInt(data.field7) || 0;
+
+    updatePuzzleCards(p1, p2, p3, p4);
+    updateSensorPanel(timer, hints, state, p1+p2+p3+p4);
+
+    if (state === 1 && !gameRunning) startLocalTimer(timer);
+    if (state === 2) { clearInterval(fetchInterval); showEndScreen(true, timer, hints); }
+    else if (state === -1) { clearInterval(fetchInterval); showEndScreen(false, 0, hints); }
+
+    document.getElementById('s-update').textContent = new Date().toLocaleTimeString();
+  } catch (err) {
+    console.error('ThingSpeak fetch error:', err);
+  }
+}
+
+function updatePuzzleCards(p1, p2, p3, p4) {
+  const puzzles = [
+    { done: p1, id: 'p1', label: 'DISABLED ✓' },
+    { done: p2, id: 'p2', label: 'STABLE ✓'   },
+    { done: p3, id: 'p3', label: 'UNLOCKED ✓' },
+    { done: p4, id: 'p4', label: 'SYNCED ✓'   },
+  ];
+  puzzles.forEach(p => {
+    const card   = document.getElementById(`${p.id}-card`);
+    const status = document.getElementById(`${p.id}-status`);
+    card.classList.remove('done', 'active');
+    if (p.done) { card.classList.add('done'); status.textContent = p.label; }
+    else { status.textContent = 'LOCKED'; }
+  });
+}
+
+function updateSensorPanel(timer, hints, state, puzzlesDone) {
+  document.getElementById('s-timer').textContent   = timer + 's';
+  document.getElementById('s-hints').textContent   = hints;
+  document.getElementById('s-puzzles').textContent = puzzlesDone + ' / 4';
+  document.getElementById('hints-display').textContent = 'HINTS USED: ' + hints;
+  const stateMap = { 0:'IDLE', 1:'▶ ACTIVE', 2:'✓ ESCAPED', '-1':'✗ FAILED' };
+  document.getElementById('s-state').textContent = stateMap[state] || 'UNKNOWN';
+  const headerMap = { 0:'AWAITING START — PRESS [A] ON KEYPAD', 1:'MISSION ACTIVE — SOLVE THE PUZZLES', 2:'MISSION COMPLETE', '-1':'MISSION FAILED' };
+  document.getElementById('header-status').textContent = headerMap[state] || 'SYSTEM ACTIVE';
+}
+
+function startLocalTimer(initialSeconds) {
+  if (gameRunning) return;
+  gameRunning = true;
+  secondsLeft = initialSeconds || 300;
+  timerInterval = setInterval(() => {
+    if (!gameRunning || secondsLeft <= 0) { clearInterval(timerInterval); return; }
+    secondsLeft--;
+    const m = Math.floor(secondsLeft / 60);
+    const s = secondsLeft % 60;
+    const display = document.getElementById('timer-display');
+    display.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if      (secondsLeft <= 60)  display.className = 'danger';
+    else if (secondsLeft <= 120) display.className = 'warning';
+    else                          display.className = '';
+  }, 1000);
+}
+
+async function showEndScreen(won, secsLeft, hints) {
+  gameRunning = false;
+  clearInterval(timerInterval);
+  document.getElementById('end-screen').style.display = 'flex';
+  document.getElementById('end-title').textContent = won ? '✅  MISSION COMPLETE' : '❌  MISSION FAILED';
+  document.getElementById('end-title').style.color = won ? 'var(--green)' : 'var(--red)';
+  document.getElementById('end-stats').textContent = won
+    ? `TIME REMAINING: ${secsLeft}s  ·  HINTS USED: ${hints}`
+    : `TIME EXPIRED  ·  HINTS USED: ${hints}`;
+  document.getElementById('end-story').textContent = 'Generating mission debrief...';
+
+  const prompt = `Write a dramatic 3-sentence mission debrief.
+The agent ${won ? 'successfully escaped' : 'failed the mission'}.
+${won ? `They escaped with ${secsLeft} seconds remaining and used ${hints} hint(s).` : `The countdown reached zero. They used ${hints} hint(s).`}
+Make it cinematic, personal, and memorable. Under 70 words. No hashtags or markdown.`;
+
+  try {
+    const ending = await callGemini(prompt);
+    document.getElementById('end-story').textContent = ending;
+  } catch {
+    document.getElementById('end-story').textContent = won
+      ? "Against impossible odds, the mission was completed. The facility is secure. Your name will never appear in any official record — but the lives you saved will remember, even if they never know it was you."
+      : "The countdown reached zero. Silence filled the facility. Another agent will be dispatched — but whatever was lost tonight cannot be recovered.";
+  }
+  if (won) fetchLeaderboard();
+}
+
+async function fetchLeaderboard() {
+  try {
+    const url = `https://api.thingspeak.com/channels/${TS_CHANNEL_ID}/feeds.json?api_key=${TS_READ_API_KEY}&results=50`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    const wins = (data.feeds || [])
+      .filter(f => parseInt(f.field7) === 2)
+      .map(f => ({ time: parseInt(f.field5)||0, hints: parseInt(f.field6)||0, date: new Date(f.created_at).toLocaleDateString('en-GB') }))
+      .sort((a, b) => b.time - a.time)
+      .slice(0, 6);
+    const lb = document.getElementById('leaderboard');
+    if (wins.length === 0) { lb.innerHTML = '<p style="color:#222; font-size:0.8rem; padding:10px 0;">No escapes recorded yet.</p>'; return; }
+    lb.innerHTML = wins.map((w, i) => `
+      <div class="lb-row">
+        <span class="lb-rank">#${i+1}</span>
+        <span class="lb-date">${w.date}</span>
+        <span class="lb-time">${w.time}s left</span>
+        <span class="lb-hints">${w.hints} hint${w.hints !== 1 ? 's' : ''}</span>
+      </div>`).join('');
+  } catch (err) { console.error('Leaderboard error:', err); }
+}
+
+function resetGame() {
+  gameRunning = false;
+  clearInterval(timerInterval);
+  clearInterval(fetchInterval);
+  secondsLeft = 300;
+  document.getElementById('end-screen').style.display   = 'none';
+  document.getElementById('intro-screen').style.display = 'flex';
+  const btn = document.querySelector('#intro-screen .btn');
+  btn.disabled    = false;
+  btn.textContent = '⚡ GENERATE MISSION BRIEFING';
+  document.getElementById('story-loading').style.display = 'none';
+  document.getElementById('timer-display').textContent = '05:00';
+  document.getElementById('timer-display').className   = '';
+  document.getElementById('header-status').textContent = 'AWAITING MISSION START';
+  updatePuzzleCards(0, 0, 0, 0);
+  updateSensorPanel(300, 0, 0, 0);
+}
+
+fetchLeaderboard();
+</script>
+</body>
+</html>
